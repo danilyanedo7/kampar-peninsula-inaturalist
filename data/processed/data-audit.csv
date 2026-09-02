@@ -1,0 +1,11 @@
+metric,value
+observations,10461
+distinct_taxa_ids,3120
+distinct_binomial_like_taxon_names,1973
+observers,92
+with_public_coordinates,10461
+without_public_coordinates,0
+obscured_or_threatened,836
+research_grade,5089
+with_photo_url,10447
+without_photo_url,14

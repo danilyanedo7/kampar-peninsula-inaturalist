@@ -1,0 +1,8 @@
+Package: kamparpeninsulainaturalist
+Type: Project
+Title: To See a Forest
+Version: 0.1.0
+Description: Reproducible data pipeline and Quarto visual essay for the Kampar Peninsula Biodiversity iNaturalist export.
+Imports:
+    jsonlite,
+    sf

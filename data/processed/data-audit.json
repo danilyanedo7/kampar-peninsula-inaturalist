@@ -1,0 +1,75 @@
+{
+  "source": {
+    "file": "raw/observations-776325.csv",
+    "project": "Kampar Peninsula Biodiversity",
+    "project_url": "https://www.inaturalist.org/projects/kampar-peninsula-biodiversity",
+    "exported_at": "2026-09-02T13:52:24Z",
+    "query": "quality_grade=any&identifications=any&projects[]=kampar-peninsula-biodiversity"
+  },
+  "observations": 10461,
+  "distinct_taxa_ids": 3120,
+  "species_level_identification": "unavailable: the export contains no taxonomic rank field",
+  "distinct_binomial_like_taxon_names": 1973,
+  "observers": 92,
+  "date_range": {
+    "first": "2002-11-30",
+    "last": "2026-09-02"
+  },
+  "coordinates": {
+    "with_public_coordinates": 10461,
+    "without_public_coordinates": 0,
+    "obscured_or_threatened": 836,
+    "positional_accuracy_available": 9329,
+    "note": "Public coordinates are not treated as exact locations; obscured or threatened records are retained and visually softened."
+  },
+  "quality_grade": {
+    "needs_id": 5372,
+    "research": 5089
+  },
+  "research_grade": 5089,
+  "photo_availability": {
+    "with_photo_url": 10447,
+    "without_photo_url": 14,
+    "with_sound_url": 17,
+    "licenses": {
+      "CC-BY-NC": 9608,
+      "CC0": 526,
+      "missing": 321,
+      "CC-BY": 5,
+      "CC-BY-NC-ND": 1
+    }
+  },
+  "taxonomic_composition": {
+    "Insecta": 3464,
+    "Plantae": 2618,
+    "Aves": 1431,
+    "Amphibia": 646,
+    "Reptilia": 548,
+    "Arachnida": 494,
+    "Fungi": 492,
+    "Mammalia": 295,
+    "Actinopterygii": 247,
+    "Animalia": 116,
+    "Mollusca": 83,
+    "Protozoa": 17,
+    "Chromista": 3
+  },
+  "missing_data": {
+    "tag_list": 10453,
+    "sound_url": 10444,
+    "private_place_guess": 10399,
+    "private_latitude": 10399,
+    "private_longitude": 10399,
+    "geoprivacy": 10339,
+    "description": 10261,
+    "positioning_method": 7848,
+    "positioning_device": 7773,
+    "taxon_geoprivacy": 6286,
+    "oauth_application_id": 3786,
+    "common_name": 2999
+  },
+  "fields": {
+    "available": ["observation ID", "taxon ID", "scientific name", "common name", "observation date", "latitude", "longitude", "positional uncertainty", "observer", "quality grade", "identification agreements", "identification disagreements", "photo URL", "photo license", "place guess", "coordinate privacy", "iconic taxon name"],
+    "unavailable_or_not_reliable": ["full kingdom/phylum/class/order/family/genus/species ranks", "observation level number of identifications", "validated native/introduced/endemic/conservation metadata"]
+  }
+}

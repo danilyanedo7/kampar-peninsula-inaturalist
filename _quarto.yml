@@ -1,0 +1,33 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+  resources:
+    - styles.css
+    - js/main.js
+    - data/web/*
+    - assets/*
+
+website:
+  title: "To See a Forest"
+  description: "An interactive visual essay about biodiversity observation in Kampar Peninsula."
+  site-url: "https://danilyanedo7.github.io/kampar-peninsula-inaturalist/"
+  repo-url: "https://github.com/danilyanedo7/kampar-peninsula-inaturalist"
+  open-graph: true
+  twitter-card: true
+  navbar: false
+
+format:
+  html:
+    css: styles.css
+    toc: false
+    page-layout: full
+    html-math-method: plain
+    include-in-header:
+      - text: |
+          <meta name="theme-color" content="#151c19">
+          <meta name="color-scheme" content="dark light">
+          <meta property="og:image" content="assets/og.svg">
+          <meta name="twitter:image" content="assets/og.svg">
+          <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#151c19"/>
+  <path d="M60 520C240 390 380 360 540 210S860 20 1140 110M80 570C270 480 380 430 610 290S930 180 1160 240" fill="none" stroke="#2a514a" stroke-width="5"/>
+  <g fill="#e5b34e"><circle cx="160" cy="430" r="8"/><circle cx="284" cy="376" r="6"/><circle cx="678" cy="194" r="8"/><circle cx="1010" cy="141" r="5"/></g>
+  <g fill="#8bb48c"><circle cx="250" cy="440" r="8"/><circle cx="480" cy="300" r="6"/><circle cx="760" cy="200" r="7"/><circle cx="1052" cy="225" r="6"/></g>
+  <g fill="#d8a0c2"><circle cx="368" cy="354" r="6"/><circle cx="603" cy="264" r="7"/><circle cx="868" cy="184" r="5"/><circle cx="1110" cy="248" r="8"/></g>
+  <text x="70" y="124" fill="#e8e4d8" font-family="Georgia,serif" font-size="86">To See a Forest</text>
+  <text x="76" y="178" fill="#a9b4aa" font-family="Arial,sans-serif" font-size="25" letter-spacing="4">KAMPAR PENINSULA · OBSERVATION AS FILTER</text>
+</svg>
