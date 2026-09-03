@@ -1,6 +1,6 @@
 ---
 title: "To See a Forest"
-description: "How 92 people built a shared picture of life in the Kampar Peninsula, one iNaturalist sighting at a time."
+description: "How 92 people built a shared picture of life in the Kampar Peninsula through iNaturalist sightings."
 image: assets/og.svg
 author: ""
 date: "2026-09-02"
@@ -15,41 +15,44 @@ format:
 ```{=html}
 <main class="essay" id="top">
 
-  <section class="opening" id="transformations" aria-labelledby="opening-title">
+  <section class="opening is-map-intro" id="transformations" aria-labelledby="opening-title">
     <div class="journey-grid constrained">
       <div class="journey-copy">
         <div class="opening-copy transform-step is-active" data-transform-step="0">
-          <p class="eyebrow">01 / 06, A shared map</p>
-          <h1 id="opening-title">KAMPAR<br>PENINSULA</h1>
-          <p class="opening-lede">What lives here? Every dot is something a person saw in the Kampar Peninsula and shared on iNaturalist.</p>
-          <p class="opening-note">Scroll to see what 10,461 sightings can show us together.</p>
+          <h1 id="opening-title" class="sr-only">Kampar Peninsula biodiversity sightings</h1>
         </div>
 
         <div class="transformation-copy">
-          <article class="transform-step" data-transform-step="1">
-            <p class="eyebrow">First, sort what people found</p>
-            <h2>Together, the sightings reveal many kinds of life.</h2>
-            <p>The sightings gather into plants, birds, insects, mammals, fungi and reptiles. One person’s photo becomes part of a much bigger picture.</p>
+          <article class="transform-step map-story-copy" data-transform-step="1">
+            <p class="eyebrow">01 / 06: A shared map</p>
+            <h2>Kampar<br>Peninsula</h2>
+            <p class="opening-lede">What lives here? Each dot marks something a person saw in the Kampar Peninsula. They shared it on iNaturalist.</p>
+            <p class="opening-note">Scroll to see what all 10,461 sightings reveal.</p>
           </article>
           <article class="transform-step" data-transform-step="2">
-            <p class="eyebrow">What did everyone find?</p>
-            <h2>People recorded thousands of different living things.</h2>
-            <p>The sightings now gather by taxon: the name used to identify a living thing. Together, people recorded 3,120 taxon IDs.</p>
+            <p class="eyebrow">First sort what people found</p>
+            <h2>The sightings show many kinds of life</h2>
+            <p>The dots gather into groups such as plants and birds. They also show insects and mammals. Fungi and reptiles appear too. One shared photo becomes part of a larger picture.</p>
           </article>
           <article class="transform-step" data-transform-step="3">
-            <p class="eyebrow">The record grows</p>
-            <h2>More sightings joined the record each year.</h2>
-            <p>The first sighting here is from 2002. More people added records over time. Each new dot is another moment someone chose to share.</p>
+            <p class="eyebrow">What did everyone find?</p>
+            <h2>People recorded thousands of different living things</h2>
+            <p>The dots now gather by taxon. A taxon is the name used to identify a living thing. The project contains 3,120 taxon IDs.</p>
           </article>
           <article class="transform-step" data-transform-step="4">
-            <p class="eyebrow">Who made this record?</p>
-            <h2>Many people helped us see Kampar.</h2>
-            <p>Ninety-two people contributed to this project. Each noticed different things, visited different places and added a piece no one else could.</p>
+            <p class="eyebrow">The record grows</p>
+            <h2>More sightings joined the record each year</h2>
+            <p>The first sighting was shared in 2002. The biggest rise began in 2025. People shared 3,570 sightings that year. The total for 2024 was 298. By September 2026 people had already shared 4,744 more. I am excited to see what future visits will reveal.</p>
           </article>
           <article class="transform-step" data-transform-step="5">
-            <p class="eyebrow">Put every piece together</p>
-            <h2>Together, their sightings make one shared map.</h2>
-            <p>The dots return to the map. No one person saw all of this. The picture exists because many people contributed.</p>
+            <p class="eyebrow">Who shared the sightings?</p>
+            <h2>Ninety-two people shaped this record</h2>
+            <p>Ninety-two people contributed to this project. They visited different places and noticed different forms of life. Each person recorded something that others might have missed.</p>
+          </article>
+          <article class="transform-step" data-transform-step="6">
+            <p class="eyebrow">Bring the records back together</p>
+            <h2>Their separate sightings become one shared map</h2>
+            <p>All 10,461 dots now return to the map. No single person recorded every place or every kind of life. Each person added what they saw. Citizen science joins those records into a view that everyone can learn from.</p>
           </article>
         </div>
       </div>
@@ -64,15 +67,15 @@ format:
 
   <section class="deep-dive canopy-section" aria-labelledby="canopy-title">
     <div class="constrained section-heading">
-      <p class="eyebrow">What did everyone find?</p>
+      <p class="eyebrow">Look more closely at the taxa</p>
       <h2 id="canopy-title">The Canopy of Life</h2>
-      <p class="section-lede">Each block is one taxon ID. Large blocks were recorded often. Small blocks may come from a single sighting. Together, they show the range of life people noticed.</p>
+      <p class="section-lede">Each of the 3,120 leaves represents one taxon ID. The 14 large branches show broad groups of life. Smaller branches connect taxa that share a genus name. Colour identifies the group. Leaf size shows the number of sightings. Hover over a leaf or select it to learn more.</p>
     </div>
     <div class="constrained canopy-frame">
-      <svg id="canopy-svg" role="img" aria-label="Blocks showing the taxa people recorded and how often they recorded them"></svg>
+      <svg id="canopy-svg" role="img" aria-label="A bird's eye taxonomic canopy with one leaf for every taxon and leaf size showing sightings"></svg>
       <div id="canopy-tooltip" class="canopy-tooltip" role="status" aria-live="polite"></div>
       <div id="canopy-legend" class="canopy-legend"></div>
-      <p class="stage-note">Block size shows the number of sightings, not how common something is in the forest. The available taxonomy is simplified into a broad group, a genus level name and then a taxon name.</p>
+      <p class="stage-note">Leaf size shows how often a taxon appears in this project. It does not show how common that organism is in the forest.</p>
     </div>
   </section>
 
@@ -80,24 +83,23 @@ format:
     <div class="analysis-grid constrained">
       <div class="analysis-copy">
         <p class="eyebrow">How often was each taxon seen?</p>
-        <h2 id="frequency-title">Most were seen only once or twice.</h2>
-        <p>A few taxa appear again and again. Many appear in just one or two records.</p>
-        <p class="pull-quote">A taxon seen once may not be rare. It may simply be hard to find, or someone may have looked only once.</p>
-        <p class="small-note">Here, “taxon” means one distinct taxon ID in the export. It does not always mean a species.</p>
+        <h2 id="frequency-title">Most taxa were seen only once or twice</h2>
+        <p>Most taxon IDs appear in only one or two sightings. A smaller group appears many times. Only 31% were seen at least three times. Yet they make up 75% of all sightings. Only nine taxon IDs were seen 50 times or more.</p>
       </div>
       <div class="analysis-visual">
-        <div class="stage-label"><span>how many times each taxon was seen</span><span id="frequency-readout"></span></div>
-        <svg id="frequency-svg" role="img" aria-label="Distribution of taxa by observation frequency"></svg>
-        <div class="axis-note"><span>few sightings</span><span>many sightings</span></div>
+        <div class="stage-label"><span>taxa with one or two sightings</span><span id="frequency-readout"></span></div>
+        <svg id="frequency-svg" role="img" aria-label="Two bars comparing the share of taxon IDs and sightings represented by taxa seen once or twice"></svg>
+        <p class="frequency-caution">A taxon seen once may not be rare. It may be hard to find. It is also possible that no one looked again.</p>
+        <p class="small-note">Here “taxon” means one distinct taxon ID in the export. It does not always mean a species.</p>
       </div>
     </div>
   </section>
 
   <section class="deep-dive attention-section" aria-labelledby="attention-title">
     <div class="constrained section-heading">
-      <p class="eyebrow">Who added the sightings?</p>
-      <h2 id="attention-title">Every person adds a different piece of Kampar.</h2>
-      <p class="section-lede">Some people shared thousands of sightings, while others shared only one or two. Each contribution helps us see a little more.</p>
+      <p class="eyebrow">How much did each person share?</p>
+      <h2 id="attention-title">Some people added many more sightings than others</h2>
+      <p class="section-lede">Some people shared thousands of sightings. Others shared only one or two. Every record helps us see a little more.</p>
     </div>
     <div class="constrained attention-frame">
       <div class="stage-label"><span>observers with the most sightings</span><span id="attention-readout"></span></div>
@@ -109,16 +111,16 @@ format:
   <section class="deep-dive network-section" aria-labelledby="network-title">
     <div class="analysis-grid constrained">
       <div class="analysis-copy">
-        <p class="eyebrow">Each person saw something different</p>
-        <h2 id="network-title">Who found what?</h2>
-        <p>Each line connects a person to a taxon they recorded. Together, the lines show how many different trips and interests can build one shared picture.</p>
+        <p class="eyebrow">Connect people with what they found</p>
+        <h2 id="network-title">Different people noticed different kinds of life</h2>
+        <p>Each line connects a person with a taxon they recorded. The full set of lines shows how many trips and interests can build one shared picture.</p>
         <p class="pull-quote" id="network-readout">The record grows because each person notices something a little different.</p>
         <p class="small-note">These lines connect people to their records. They do not show relationships between organisms.</p>
       </div>
       <div class="network-visual">
         <div class="stage-label"><span>active observers and often seen taxa</span><span>shared sightings</span></div>
         <svg id="network-svg" role="img" aria-label="People connected to the taxa they recorded"></svg>
-      <p class="stage-note">Only the most active observers and taxa seen most often are named here, so the lines remain readable. The opening transformation still includes every sighting.</p>
+      <p class="stage-note">Only the most active observers and the most often seen taxa are named here. This keeps the lines readable. The opening transformation still includes every sighting.</p>
       </div>
     </div>
   </section>
@@ -126,8 +128,8 @@ format:
   <section class="deep-dive effort-section" aria-labelledby="effort-title">
     <div class="constrained section-heading">
       <p class="eyebrow">Where did people go?</p>
-      <h2 id="effort-title">Bright places are places people visited.</h2>
-      <p class="section-lede">Switch between taxa, sightings, people and visit days. Some places are bright because people returned many times. A dark place may simply have had fewer visits.</p>
+      <h2 id="effort-title">Bright places are places people visited</h2>
+      <p class="section-lede">Use the buttons to compare taxa with sightings. You can also compare people and visit days. Bright places received more visits. Dark places may simply have fewer records.</p>
     </div>
     <div class="constrained effort-frame">
       <div class="effort-controls" role="group" aria-label="Spatial measure controls">
@@ -138,14 +140,14 @@ format:
       </div>
       <svg id="effort-svg" role="img" aria-label="Five kilometre cells showing where people shared sightings"></svg>
       <p class="effort-caption" id="effort-caption">Taxa recorded in each 5 km cell.</p>
-      <p class="stage-note">Each hexagon covers a 5 km cell. This map shows where records were made; it does not show how many organisms truly live there.</p>
+      <p class="stage-note">Each hexagon covers a 5 km cell. This map shows where people made records. It does not show how many organisms truly live there.</p>
     </div>
   </section>
 
   <section class="deep-dive time-section" aria-labelledby="time-title">
     <div class="constrained section-heading">
       <p class="eyebrow">What happens when people keep looking?</p>
-      <h2 id="time-title">The shared record keeps growing.</h2>
+      <h2 id="time-title">The shared record keeps growing</h2>
       <p class="section-lede">Every visit can add a new sighting. Sometimes it adds a taxon that had never appeared in this project before.</p>
     </div>
     <div class="constrained time-frame">
@@ -158,21 +160,23 @@ format:
 
   <section class="after-journey" aria-labelledby="after-title">
     <div class="constrained after-grid">
-      <div>
+      <div class="after-heading">
         <p class="eyebrow">What citizen science can do</p>
-        <h2 id="after-title">One sighting can become<br>shared knowledge.</h2>
+        <h2 id="after-title">One sighting can become<br>shared knowledge</h2>
       </div>
-      <div class="after-copy">
-        <p>This project brings together <strong data-bind="observations">10,461</strong> sightings, <strong data-bind="taxa">3,120</strong> taxon IDs and <strong data-bind="observers">92</strong> people. Each record began with a simple act: someone noticed a living thing and chose to share it.</p>
+      <p class="after-intro">This project contains <strong data-bind="observations">10,461</strong> sightings and <strong data-bind="taxa">3,120</strong> taxon IDs. The records came from <strong data-bind="observers">92</strong> people. Each record began with a simple act. Someone noticed a living thing and chose to share it.</p>
+      <div class="after-process">
         <div class="filter-line" aria-label="The observation visibility filter">
-          <div class="filter-step"><span>life is there</span><b style="--bar: 100%"></b><i>then</i></div>
-          <div class="filter-step"><span>a person reaches the place</span><b style="--bar: 54%"></b><i>then</i></div>
-          <div class="filter-step"><span>they notice it</span><b style="--bar: 33%"></b><i>then</i></div>
-          <div class="filter-step"><span>they record it</span><b style="--bar: 23%"></b><i>then</i></div>
-          <div class="filter-step"><span>they share it on iNaturalist</span><b style="--bar: 13%"></b><i></i></div>
+          <div class="filter-step"><span>life is there</span><b style="--bar: 100%"></b></div>
+          <div class="filter-step"><span>a person reaches the place</span><b style="--bar: 54%"></b></div>
+          <div class="filter-step"><span>they notice it</span><b style="--bar: 33%"></b></div>
+          <div class="filter-step"><span>they record it</span><b style="--bar: 23%"></b></div>
+          <div class="filter-step"><span>they share it on iNaturalist</span><b style="--bar: 13%"></b></div>
         </div>
-        <p class="small-note">The narrowing bars show the steps every record must pass through. Their widths are illustrative, not measured percentages.</p>
-        <p class="after-note">Citizen science cannot show everything. It shows what people were able to notice, record and share.</p>
+        <div class="after-context">
+          <p class="small-note">The narrowing bars show the steps every record must pass through. The bar widths are examples. They are not measured percentages.</p>
+          <p class="after-note">Citizen science cannot show everything. It shows what people noticed. It also shows what they could record and share.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -180,8 +184,8 @@ format:
   <section class="moments" aria-labelledby="moments-title">
     <div class="constrained">
       <p class="eyebrow">Behind every dot</p>
-      <h2 id="moments-title">Every dot began when someone met a living thing.</h2>
-      <p class="section-lede">A sighting may look like one small mark on a screen. It began with a real encounter: a person stopped, looked, took a photo and shared what they found.</p>
+      <h2 id="moments-title">Every dot began when someone met a living thing</h2>
+      <p class="section-lede">A sighting may look like one small mark on a screen. It began with a real encounter. A person stopped to look. They took a photo and shared what they found.</p>
       <div class="moments-grid" id="moments-grid"></div>
       <p class="stage-note">These photographs come from iNaturalist records that allow reuse. Credits and licenses are shown with each image.</p>
     </div>
@@ -190,8 +194,8 @@ format:
   <section class="ending" aria-labelledby="ending-title">
     <div class="constrained ending-inner">
       <p class="ending-question">What lives in Kampar?</p>
-      <h2 id="ending-title">We do not know<br>everything.</h2>
-      <p class="ending-answer">But together, we can see much more than any one person could.</p>
+      <h2 id="ending-title">We do not know<br>everything</h2>
+      <p class="ending-answer">Together we can see much more than one person could.</p>
       <div class="last-observation"><i id="last-observation-mark"></i><span id="last-observation-text">One more sighting joins the shared record.</span></div>
     </div>
   </section>

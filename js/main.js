@@ -42,7 +42,7 @@
 
   const state = {
     data: null,
-    mode: "geo",
+    mode: "intro",
     modeIndex: 0,
     width: 0,
     height: 0,
@@ -76,7 +76,7 @@
     renderEffort();
     renderTime();
     renderEnding();
-    renderOrganism("geo", true);
+    renderOrganism("intro", true);
     setupInteractions();
     window.addEventListener("resize", () => {
       if (!state.data) return;
@@ -93,7 +93,7 @@
     console.error(error);
     const note = document.createElement("p");
     note.className = "data-error";
-    note.textContent = "The interactive graphics could not load, but you can still read the story and methods below.";
+    note.textContent = "The interactive graphics could not load. You can still read the story below.";
     q("#top")?.prepend(note);
   });
 
@@ -107,6 +107,7 @@
 
   function setupInteractions() {
     const steps = qa("[data-transform-step]");
+    const mapStoryStep = q('[data-transform-step="1"]');
     const modeButtons = qa("[data-mode-button]");
     const effortButtons = qa("[data-effort-metric]");
     steps.forEach((step) => step.addEventListener("click", () => setMode(Number(step.dataset.transformStep))));
@@ -119,6 +120,14 @@
       });
       renderEffort();
     }));
+    const updateOpeningStagePosition = () => {
+      if (!mapStoryStep || !state.dotSelection || state.modeIndex > 1) return;
+      const top = mapStoryStep.getBoundingClientRect().top;
+      const start = window.innerHeight * 0.9;
+      const distance = window.innerHeight * 0.62;
+      const progress = clamp((start - top) / distance, 0, 1);
+      renderOpeningMapProgress(progress);
+    };
     const updateModeFromScroll = () => {
       if (!steps.length) return;
       const focus = window.innerHeight * 0.48;
@@ -135,21 +144,30 @@
       scrollQueued = true;
       window.requestAnimationFrame(() => {
         scrollQueued = false;
+        updateOpeningStagePosition();
         updateModeFromScroll();
       });
     }, { passive: true });
-    window.requestAnimationFrame(updateModeFromScroll);
+    window.addEventListener("resize", () => window.requestAnimationFrame(updateOpeningStagePosition), { passive: true });
+    window.requestAnimationFrame(() => {
+      updateOpeningStagePosition();
+      updateModeFromScroll();
+    });
   }
 
   function setMode(modeIndex) {
-    const modes = ["geo", "group", "species", "year", "observer", "geo"];
-    const mode = modes[modeIndex] || "geo";
+    const modes = ["intro", "geo", "group", "species", "year", "observer", "geo"];
+    const mode = modes[modeIndex] || "intro";
     if (state.modeIndex === modeIndex && state.dotSelection) return;
+    const previousIndex = state.modeIndex;
+    const modeChanged = state.mode !== mode;
     state.mode = mode;
     state.modeIndex = modeIndex;
+    q(".opening")?.classList.toggle("is-map-intro", modeIndex === 0);
     qa("[data-transform-step]").forEach((item) => item.classList.toggle("is-active", Number(item.dataset.transformStep) === modeIndex));
     qa("[data-mode-button]").forEach((item) => item.classList.toggle("is-active", Number(item.dataset.modeButton) === modeIndex));
-    renderOrganism(mode, false);
+    if (modeChanged && !(previousIndex <= 1 && modeIndex <= 1)) renderOrganism(mode, false);
+    else updateStageReadout(mode);
   }
 
   function stableNoise(value) {
@@ -159,11 +177,16 @@
     return Math.abs(Math.sin(hash)) % 1;
   }
 
-  function getScales(width, height) {
+  function getScales(width, height, left = 0) {
     const extent = state.data.spatial.extent;
-    const x = d3.scaleLinear().domain([extent.min_lon - 0.03, extent.max_lon + 0.03]).range([28, width - 28]);
+    const x = d3.scaleLinear().domain([extent.min_lon - 0.03, extent.max_lon + 0.03]).range([left + 28, left + width - 28]);
     const y = d3.scaleLinear().domain([extent.min_lat - 0.03, extent.max_lat + 0.03]).range([height - 26, 30]);
     return { x, y };
+  }
+
+  function getPlotBounds(width) {
+    const left = window.innerWidth > 900 && state.modeIndex > 0 ? width * 0.4 : 0;
+    return { left, width: width - left, right: width };
   }
 
   function ensureSvg() {
@@ -175,7 +198,6 @@
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     state.width = width;
     state.height = height;
-    state.scales = getScales(width, height);
     const root = d3.select(svg);
     if (root.select("g.backdrop").empty()) root.append("g").attr("class", "backdrop");
     if (root.select("g.branches").empty()) root.append("g").attr("class", "branches");
@@ -188,22 +210,24 @@
     if (!state.data) return;
     const view = ensureSvg();
     if (!view) return;
+    state.plot = getPlotBounds(view.width);
+    state.scales = getScales(state.plot.width, view.height, state.plot.left);
     state.layouts = {
       geo: buildGeoLayout(view.width, view.height),
-      group: buildGroupLayout(view.width, view.height),
-      species: buildSpeciesLayout(view.width, view.height),
-      year: buildYearLayout(view.width, view.height),
-      observer: buildObserverLayout(view.width, view.height)
+      group: buildGroupLayout(state.plot.width, view.height, state.plot.left),
+      species: buildSpeciesLayout(state.plot.width, view.height, state.plot.left),
+      year: buildYearLayout(state.plot.width, view.height, state.plot.left),
+      observer: buildObserverLayout(state.plot.width, view.height, state.plot.left)
     };
     drawBackdrop(view.root, mode, view.width, view.height);
     const observations = state.data.observations;
-    const layout = mode === "geo" ? state.layouts.geo : state.layouts[mode]?.positions;
+    const layout = mode === "geo" || mode === "intro" ? state.layouts.geo : state.layouts[mode]?.positions;
     if (!layout || layout.length !== observations.length || layout.some((point) => !point || !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
       console.error(`Invalid observation layout for mode: ${mode}`);
       return;
     }
     const dotsLayer = view.root.select("g.dots");
-    const radiusByMode = { geo: 1.45, group: 1.05, species: 1.15, year: 1.05, observer: 1.05 };
+    const radiusByMode = { intro: 1.45, geo: 1.45, group: 1.05, species: 1.15, year: 1.05, observer: 1.05 };
     const radius = (radiusByMode[mode] || 1.15) * (view.width < 520 ? 0.82 : 1);
     const transitionMs = reducedMotion || immediate ? 0 : 760;
     const dots = dotsLayer.selectAll("circle.observation-dot").data(observations, (d) => d.id);
@@ -223,6 +247,24 @@
     if (transitionMs) decor.attr("opacity", 0).transition().delay(Math.round(transitionMs * 0.55)).duration(Math.round(transitionMs * 0.4)).attr("opacity", 1);
     else decor.attr("opacity", 1);
     updateStageReadout(mode);
+  }
+
+  function renderOpeningMapProgress(progress) {
+    if (!state.data || !state.dotSelection || !state.width || !state.height) return;
+    const eased = progress * progress * (3 - 2 * progress);
+    const fullScales = getScales(state.width, state.height, 0);
+    const insetLeft = window.innerWidth > 900 ? state.width * 0.4 : 0;
+    const insetWidth = state.width - insetLeft;
+    const insetScales = getScales(insetWidth, state.height, insetLeft);
+    state.plot = { left: insetLeft, width: insetWidth, right: state.width };
+    state.scales = insetScales;
+    state.dotSelection.interrupt().attr("cx", (d) => {
+      const startX = fullScales.x(d.lon);
+      return startX + (insetScales.x(d.lon) - startX) * eased;
+    }).attr("cy", (d) => fullScales.y(d.lat));
+    const root = d3.select("#organism-svg");
+    if (root.select(".map-grid").empty()) drawBackdrop(root, "geo", state.width, state.height);
+    root.selectAll("g.backdrop, g.branches, g.labels").interrupt().attr("opacity", eased);
   }
 
   function updateStageReadout(mode) {
@@ -256,16 +298,15 @@
   function drawGeoBackdrop(backdrop, labels, width, height) {
     const { x, y } = state.scales;
     const extent = state.data.spatial.extent;
+    const plot = state.plot || { left: 0, right: width };
     d3.range(Math.ceil(extent.min_lon * 10) / 10, extent.max_lon + 0.1, 0.2).forEach((lon) => {
       backdrop.append("line").attr("class", "map-grid").attr("x1", x(lon)).attr("x2", x(lon)).attr("y1", 0).attr("y2", height);
     });
     d3.range(Math.ceil(extent.min_lat * 10) / 10, extent.max_lat + 0.1, 0.2).forEach((lat) => {
-      backdrop.append("line").attr("class", "map-grid").attr("x1", 0).attr("x2", width).attr("y1", y(lat)).attr("y2", y(lat));
+      backdrop.append("line").attr("class", "map-grid").attr("x1", plot.left).attr("x2", plot.right).attr("y1", y(lat)).attr("y2", y(lat));
     });
-    const hull = state.data.spatial.hull || [];
-    if (hull.length) backdrop.append("path").datum(hull).attr("class", "map-hull").attr("d", d3.line().x((d) => x(d.lon)).y((d) => y(d.lat)));
-    labels.append("text").attr("class", "map-label").attr("x", 28).attr("y", 18).text("where sightings were shared");
-    labels.append("text").attr("class", "map-label").attr("x", width - 28).attr("y", 18).attr("text-anchor", "end").text("N");
+    labels.append("text").attr("class", "map-label").attr("x", plot.left + 28).attr("y", 18).text("where sightings were shared");
+    labels.append("text").attr("class", "map-label").attr("x", plot.right - 28).attr("y", 18).attr("text-anchor", "end").text("N");
   }
 
   function drawGroupBackdrop(labels, width, height) {
@@ -273,7 +314,7 @@
     layout.groupCenters.forEach((group) => {
       const label = labels.append("text").attr("class", "group-label").attr("x", group.x).attr("y", group.y);
       label.append("tspan").text(group.name);
-      label.append("tspan").attr("x", group.x).attr("dy", 16).text(`${fmt(group.observations)} sightings, ${fmt(group.taxa)} taxa`);
+      label.append("tspan").attr("x", group.x).attr("dy", 16).text(`${fmt(group.observations)} sightings across ${fmt(group.taxa)} taxa`);
     });
   }
 
@@ -299,7 +340,7 @@
 
   function drawObserverBackdrop(backdrop, labels, width, height) {
     state.layouts.observer.observers.forEach((item) => {
-      backdrop.append("line").attr("class", "observer-guide").attr("x1", item.xStart).attr("x2", width - 12).attr("y1", item.y).attr("y2", item.y);
+      backdrop.append("line").attr("class", "observer-guide").attr("x1", item.xStart).attr("x2", item.xEnd).attr("y1", item.y).attr("y2", item.y);
       labels.append("text")
         .attr("class", "observer-label")
         .attr("x", item.xStart - 10)
@@ -313,7 +354,7 @@
     return state.data.observations.map((observation) => ({ x: state.scales.x(observation.lon), y: state.scales.y(observation.lat) }));
   }
 
-  function buildGroupLayout(width, height) {
+  function buildGroupLayout(width, height, offsetX = 0) {
     const groups = state.data.summary.group_summary;
     const cols = width < 620 ? 2 : 3;
     const rows = Math.ceil(groups.length / cols);
@@ -330,7 +371,7 @@
       const count = group.observations;
       const columns = Math.max(5, Math.ceil(Math.sqrt(count * (boxW - 20) / Math.max(36, boxH - 28))));
       const rowsIn = Math.ceil(count / columns);
-      centers.push({ name: group.group, observations: group.observations, taxa: group.taxa, x: left + 10, y: top + 18 });
+      centers.push({ name: group.group, observations: group.observations, taxa: group.taxa, x: offsetX + left + 10, y: top + 18 });
       let local = 0;
       state.data.observations.forEach((observation, index) => {
         if (observation.group !== group.group) return;
@@ -338,14 +379,14 @@
         const r = Math.floor(local / columns);
         const x = left + 10 + (columns === 1 ? 0 : c * (boxW - 20) / (columns - 1));
         const y = top + 52 + (rowsIn === 1 ? 0 : r * Math.max(4, boxH - 64) / (rowsIn - 1));
-        positions[index] = { x: x + (stableNoise(observation.id) - 0.5) * 1.3, y: y + (stableNoise(`${observation.id}-group`) - 0.5) * 1.3 };
+        positions[index] = { x: offsetX + x + (stableNoise(observation.id) - 0.5) * 1.3, y: y + (stableNoise(`${observation.id}-group`) - 0.5) * 1.3 };
         local += 1;
       });
     });
     return { positions, groupCenters: centers };
   }
 
-  function buildSpeciesLayout(width, height) {
+  function buildSpeciesLayout(width, height, offsetX = 0) {
     const groupData = state.data.summary.group_summary.map((item) => ({ name: item.group, taxa: [] }));
     const groupMap = new Map(groupData.map((item) => [item.name, item]));
     state.data.taxa.forEach((taxon) => {
@@ -360,30 +401,30 @@
     const positions = [];
     state.data.observations.forEach((observation, index) => {
       const node = taxonNodes.get(observation.taxon);
-      if (!node) { positions[index] = { x: width / 2, y: height / 2 }; return; }
+      if (!node) { positions[index] = { x: offsetX + width / 2, y: height / 2 }; return; }
       const angle = stableNoise(`${observation.id}-angle`) * Math.PI * 2;
       const distance = Math.sqrt(stableNoise(`${observation.id}-distance`)) * Math.max(0.6, node.r * 0.72);
-      positions[index] = { x: node.x + Math.cos(angle) * distance, y: node.y + Math.sin(angle) * distance };
+      positions[index] = { x: offsetX + node.x + Math.cos(angle) * distance, y: node.y + Math.sin(angle) * distance };
     });
-    const centerX = width / 2;
+    const centerX = offsetX + width / 2;
     const centerY = height - 22;
     const branches = [];
     root.descendants().filter((node) => node.depth > 0).forEach((node) => {
       const parent = node.parent;
       const type = node.depth === 1 ? "group" : "taxon";
-      branches.push({ type, path: `M${parent.x},${parent.y} Q${(parent.x + node.x) / 2},${(parent.y + node.y) / 2 - 16} ${node.x},${node.y}` });
+      branches.push({ type, path: `M${offsetX + parent.x},${parent.y} Q${offsetX + (parent.x + node.x) / 2},${(parent.y + node.y) / 2 - 16} ${offsetX + node.x},${node.y}` });
     });
     root.children.forEach((group) => {
-      branches.push({ type: "group", path: `M${centerX},${centerY} Q${centerX},${(centerY + group.y) / 2} ${group.x},${group.y}` });
+      branches.push({ type: "group", path: `M${centerX},${centerY} Q${centerX},${(centerY + group.y) / 2} ${offsetX + group.x},${group.y}` });
     });
-    const groupNodes = root.children.map((node) => ({ name: node.data.name, x: node.x, y: node.y - Math.max(8, node.r) - 8, taxa: node.leaves().length }));
-    const labels = root.leaves().filter((node) => node.data.observation_count >= 35).slice(0, 18).map((node) => ({ name: node.data.scientific, x: node.x + Math.min(8, node.r + 2), y: node.y - Math.min(6, node.r + 2) }));
+    const groupNodes = root.children.map((node) => ({ name: node.data.name, x: offsetX + node.x, y: node.y - Math.max(8, node.r) - 8, taxa: node.leaves().length }));
+    const labels = root.leaves().filter((node) => node.data.observation_count >= 35).slice(0, 18).map((node) => ({ name: node.data.scientific, x: offsetX + node.x + Math.min(8, node.r + 2), y: node.y - Math.min(6, node.r + 2) }));
     return { positions, branches, groupNodes, labels };
   }
 
-  function buildYearLayout(width, height) {
+  function buildYearLayout(width, height, offsetX = 0) {
     const years = state.data.temporal.map((item) => item.year);
-    const xScale = d3.scalePoint().domain(years).range([28, width - 28]);
+    const xScale = d3.scalePoint().domain(years).range([offsetX + 28, offsetX + width - 28]);
     const grouped = d3.group(state.data.observations, (d) => d.year);
     const positions = [];
     years.forEach((year) => {
@@ -399,7 +440,7 @@
     return { positions, years: years.map((year) => ({ year, x: xScale(year) })) };
   }
 
-  function buildObserverLayout(width, height) {
+  function buildObserverLayout(width, height, offsetX = 0) {
     const namedCount = width < 520 ? 7 : 10;
     const namedObservers = state.data.observers.slice(0, namedCount);
     const namedSet = new Set(namedObservers.map((d) => d.observer));
@@ -420,7 +461,7 @@
         const column = local % columns;
         const row = Math.floor(local / columns);
         positions[state.data.observationIndex.get(observation.id)] = {
-          x: left + (columns === 1 ? availableWidth / 2 : column * availableWidth / (columns - 1)),
+          x: offsetX + left + (columns === 1 ? availableWidth / 2 : column * availableWidth / (columns - 1)),
           y: yScale(key) + 3 + (rows === 1 ? bandHeight / 2 : row * Math.max(2, bandHeight - 6) / (rows - 1))
         };
       });
@@ -430,7 +471,7 @@
       const item = observerLookup.get(key);
       const name = item ? safe(item.display_name, item.observer) : `${otherCount} other observers`;
       const compactName = name.length > (width < 520 ? 14 : 20) ? `${name.slice(0, width < 520 ? 11 : 17)}...` : name;
-      return { label: compactName, xStart: left, y: yScale(key) + yScale.bandwidth() / 2 };
+      return { label: compactName, xStart: offsetX + left, xEnd: offsetX + width - right, y: yScale(key) + yScale.bandwidth() / 2 };
     });
     return { positions, observers: rows };
   }
@@ -441,7 +482,7 @@
     if (!tooltip || !frame) return;
     const bounds = frame.getBoundingClientRect();
     const frameSvg = q("#organism-svg").getBoundingClientRect();
-    tooltip.innerHTML = `<strong>${escapeHtml(observation.scientific)}</strong>${observation.common ? `<span>${escapeHtml(observation.common)}</span>` : ""}<span>${escapeHtml(formatDate(observation.date))}, ${escapeHtml(observation.group)}<br>${escapeHtml(observation.observer)}, ${escapeHtml(observation.quality || "quality not specified")}</span>`;
+    tooltip.innerHTML = `<strong>${escapeHtml(observation.scientific)}</strong>${observation.common ? `<span>${escapeHtml(observation.common)}</span>` : ""}<span>${escapeHtml(formatDate(observation.date))}<br>${escapeHtml(observation.group)}<br>${escapeHtml(observation.observer)}<br>${escapeHtml(observation.quality || "quality not specified")}</span>`;
     tooltip.style.left = `${clamp(event.clientX - bounds.left + 12, 8, bounds.width - tooltip.offsetWidth - 8)}px`;
     tooltip.style.top = `${clamp(event.clientY - frameSvg.top + 12, 8, bounds.height - tooltip.offsetHeight - 8)}px`;
     tooltip.classList.add("is-visible");
@@ -481,53 +522,95 @@
     tooltip.classList.add("is-visible");
   }
 
+  function canopyBranchPath(source, target) {
+    const dx = target.x - source.x;
+    const dy = target.y - source.y;
+    const bend = (stableNoise(`${target.data?.name || target.data?.key || "branch"}-branch`) - 0.5) * 0.12;
+    const controlX = (source.x + target.x) / 2 - dy * bend;
+    const controlY = (source.y + target.y) / 2 + dx * bend;
+    return `M${source.x},${source.y}Q${controlX},${controlY} ${target.x},${target.y}`;
+  }
+
+  function canopyLeafGeometry(node) {
+    const radius = Math.max(0.55, node.r * 0.92);
+    const cx = node.x;
+    const cy = node.y;
+    const rx = radius;
+    const ry = Math.max(0.4, radius * 0.56);
+    const path = `M${cx - rx},${cy}C${cx - rx * 0.32},${cy - ry} ${cx + rx * 0.32},${cy - ry} ${cx + rx},${cy}C${cx + rx * 0.32},${cy + ry} ${cx - rx * 0.32},${cy + ry} ${cx - rx},${cy}Z`;
+    const vein = `M${cx - rx * 0.72},${cy}L${cx + rx * 0.72},${cy}`;
+    const outwardAngle = node.parent
+      ? Math.atan2(cy - node.parent.y, cx - node.parent.x) * 180 / Math.PI
+      : 0;
+    const angle = outwardAngle + (stableNoise(node.data.key || node.data.name) - 0.5) * 18;
+    return { path, vein, cx, cy, angle, width: rx * 2, height: ry * 2 };
+  }
+
+  function canopyLeafColor(node, colorsFor) {
+    const base = d3.hsl(colorsFor(node.data.group));
+    const variation = (stableNoise(node.data.key || node.data.name) - 0.5) * 0.1;
+    base.s = clamp(base.s * 0.82, 0.28, 0.7);
+    base.l = clamp(base.l * 0.65 + variation, 0.27, 0.58);
+    return base.formatHex();
+  }
+
+  function canopyLeafStroke(node, colorsFor) {
+    return d3.hsl(canopyLeafColor(node, colorsFor)).darker(0.65).formatHex();
+  }
+
   function renderCanopy() {
     const svg = q("#canopy-svg");
     if (!svg || !state.data) return;
     const frame = svg.parentElement;
     const width = Math.max(300, frame.getBoundingClientRect().width);
-    const height = Math.max(440, Math.min(window.innerWidth < 600 ? 620 : 760, window.innerHeight * 0.84));
+    const height = window.innerWidth < 600
+      ? Math.max(430, Math.min(560, width * 1.18))
+      : Math.max(520, Math.min(760, window.innerHeight * 0.84));
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = "";
     const root = d3.hierarchy(buildCanopyTree())
       .sum((d) => d.observation_count || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
-    d3.treemap()
-      .tile(d3.treemapSquarify.ratio(1))
-      .size([width, height])
-      .round(true)
-      .paddingOuter(1)
-      .paddingTop((d) => d.depth === 1 ? ((d.value || 0) >= 100 ? 22 : 4) : 1)
-      .paddingInner((d) => d.depth === 0 ? 5 : d.depth === 1 ? 2 : 0.7)(root);
+    const outerPadding = window.innerWidth < 600 ? 6 : 12;
+    d3.pack()
+      .size([width - outerPadding * 2, height - outerPadding * 2])
+      .padding(window.innerWidth < 600 ? 1.1 : 1.6)(root);
+    root.each((node) => {
+      node.x += outerPadding;
+      node.y += outerPadding;
+    });
     const group = d3.select(svg).append("g");
+    group.append("title").text("The Canopy of Life");
+    group.append("desc").text("A bird's eye taxonomic canopy. Branches radiate from the centre into life groups and genus level names. Every leaf is one taxon. Larger leaves represent more sightings.");
     const colorsFor = (name) => state.data.summary.colors[name] || colors.Unclassified;
-    const groupNodes = root.descendants().filter((d) => d.depth === 1);
-    const genusNodes = root.descendants().filter((d) => d.depth === 2 && d.x1 - d.x0 > 4 && d.y1 - d.y0 > 4);
+    const groupNodes = root.children || [];
+    const genusNodes = root.descendants().filter((d) => d.depth === 2);
     const leaves = root.leaves();
-    group.append("g").selectAll("rect.canopy-group-block")
-      .data(groupNodes)
-      .join("rect")
-      .attr("class", "canopy-group-block")
-      .attr("x", (d) => d.x0).attr("y", (d) => d.y0)
-      .attr("width", (d) => Math.max(0, d.x1 - d.x0)).attr("height", (d) => Math.max(0, d.y1 - d.y0))
-      .attr("stroke", (d) => colorsFor(d.data.group));
-    group.append("g").selectAll("rect.canopy-genus-block")
-      .data(genusNodes)
-      .join("rect")
-      .attr("class", "canopy-genus-block")
-      .attr("x", (d) => d.x0).attr("y", (d) => d.y0)
-      .attr("width", (d) => Math.max(0, d.x1 - d.x0)).attr("height", (d) => Math.max(0, d.y1 - d.y0));
-    group.append("g").selectAll("rect.canopy-leaf")
+    leaves.forEach((node) => {
+      node.leaf = canopyLeafGeometry(node);
+    });
+    group.append("g").selectAll("path.canopy-twig")
       .data(leaves)
-      .join("rect")
+      .join("path")
+      .attr("class", "canopy-twig")
+      .attr("d", (d) => canopyBranchPath(d.parent, d))
+      .attr("stroke", (d) => colorsFor(d.data.group));
+    group.append("g").selectAll("path.canopy-genus-branch")
+      .data(genusNodes)
+      .join("path")
+      .attr("class", "canopy-genus-branch")
+      .attr("d", (d) => canopyBranchPath(d.parent, d))
+      .attr("stroke", (d) => colorsFor(d.data.group));
+    group.append("g").selectAll("path.canopy-group-branch")
+      .data(groupNodes)
+      .join("path")
+      .attr("class", "canopy-group-branch")
+      .attr("d", (d) => canopyBranchPath(root, d))
+      .attr("stroke", (d) => colorsFor(d.data.group));
+    const leafGroups = group.append("g").selectAll("g.canopy-leaf")
+      .data(leaves)
+      .join("g")
       .attr("class", "canopy-leaf")
-      .attr("x", (d) => d.x0).attr("y", (d) => d.y0)
-      .attr("width", (d) => Math.max(0, d.x1 - d.x0))
-      .attr("height", (d) => Math.max(0, d.y1 - d.y0))
-      .attr("fill", (d) => colorsFor(d.data.group))
-      .attr("stroke", (d) => (d.data.research_grade_count || 0) / Math.max(1, d.data.observation_count || 1) >= 0.75 ? "#505050" : colors.Reptiles)
-      .attr("stroke-width", (d) => (d.data.research_grade_count || 0) / Math.max(1, d.data.observation_count || 1) >= 0.75 ? 0.35 : 0.9)
-      .attr("opacity", 0.88)
       .on("pointerenter", (event, d) => showCanopyTooltip(event, d.data, frame))
       .on("pointermove", (event, d) => showCanopyTooltip(event, d.data, frame))
       .on("pointerleave", () => q("#canopy-tooltip")?.classList.remove("is-visible"))
@@ -535,48 +618,109 @@
         event.stopPropagation();
         showCanopyTooltip(event, d.data, frame);
       });
+    leafGroups.append("path")
+      .attr("class", "canopy-leaf-shape")
+      .attr("d", (d) => d.leaf.path)
+      .attr("transform", (d) => `rotate(${d.leaf.angle},${d.leaf.cx},${d.leaf.cy})`)
+      .attr("fill", (d) => canopyLeafColor(d, colorsFor))
+      .attr("stroke", (d) => canopyLeafStroke(d, colorsFor))
+      .attr("stroke-width", 0.55);
+    leafGroups.filter((d) => d.leaf.width > 9 && d.leaf.height > 6)
+      .append("path")
+      .attr("class", "canopy-leaf-vein")
+      .attr("d", (d) => d.leaf.vein)
+      .attr("transform", (d) => `rotate(${d.leaf.angle},${d.leaf.cx},${d.leaf.cy})`);
+    leafGroups.append("circle")
+      .attr("class", "canopy-leaf-hit")
+      .attr("cx", (d) => d.x)
+      .attr("cy", (d) => d.y)
+      .attr("r", (d) => Math.max(2.4, d.r));
     group.append("g").selectAll("text")
-      .data(groupNodes.filter((d) => d.x1 - d.x0 > 58 && d.y1 - d.y0 > 28))
+      .data(groupNodes.filter((d) => d.r > 24))
       .join("text")
       .attr("class", "canopy-group-label")
-      .attr("x", (d) => d.x0 + 7)
-      .attr("y", (d) => d.y0 + 16)
+      .attr("x", (d) => d.x)
+      .attr("y", (d) => d.y - d.r + 14)
+      .attr("text-anchor", "middle")
       .attr("fill", (d) => colorsFor(d.data.group))
-      .text((d) => `${d.data.name}, ${fmt(d.value || 0)}`);
+      .text((d) => `${d.data.name}: ${fmt(d.value || 0)}`);
     const legend = q("#canopy-legend");
-    if (legend) legend.innerHTML = `<span class="canopy-legend-item"><i class="canopy-legend-size"></i>block size = sightings</span>${state.data.summary.group_summary.slice(0, 9).map((item) => `<span class="canopy-legend-item"><i class="canopy-legend-dot" style="background:${escapeHtml(item.color)}"></i>${escapeHtml(item.group)}</span>`).join("")}`;
+    if (legend) legend.innerHTML = `<span class="canopy-legend-item"><i class="canopy-legend-size"></i>leaf size shows sightings</span>${state.data.summary.group_summary.slice(0, 9).map((item) => `<span class="canopy-legend-item"><i class="canopy-legend-dot" style="background:${escapeHtml(item.color)}"></i>${escapeHtml(item.group)}</span>`).join("")}`;
   }
 
   function renderFrequency() {
     const svg = q("#frequency-svg");
     if (!svg || !state.data) return;
     const width = Math.max(280, svg.parentElement.getBoundingClientRect().width);
-    const height = window.innerWidth < 600 ? 300 : 390;
-    const margin = { top: 18, right: 14, bottom: 42, left: 10 };
+    const height = 230;
+    const margin = {
+      top: 26,
+      right: window.innerWidth < 520 ? 50 : 62,
+      bottom: 24,
+      left: window.innerWidth < 520 ? Math.min(148, width * 0.48) : Math.min(218, width * 0.35)
+    };
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = "";
-    const maxObs = d3.max(state.data.taxa, (d) => d.observation_count) || 1;
-    const x = d3.scaleLog().domain([1, Math.max(2, maxObs)]).range([margin.left, width - margin.right]);
+    const lightlyRecorded = state.data.distribution.filter((d) => d.max !== null && d.max <= 2);
+    const totalTaxa = d3.sum(state.data.distribution, (d) => d.taxa);
+    const totalSightings = d3.sum(state.data.distribution, (d) => d.observations);
+    const lightlyRecordedTaxa = d3.sum(lightlyRecorded, (d) => d.taxa);
+    const lightlyRecordedSightings = d3.sum(lightlyRecorded, (d) => d.observations);
+    const rows = [
+      {
+        label: "taxon IDs",
+        count: lightlyRecordedTaxa,
+        total: totalTaxa,
+        value: lightlyRecordedTaxa / Math.max(1, totalTaxa)
+      },
+      {
+        label: "all sightings",
+        count: lightlyRecordedSightings,
+        total: totalSightings,
+        value: lightlyRecordedSightings / Math.max(1, totalSightings)
+      }
+    ];
+    const x = d3.scaleLinear().domain([0, 1]).range([margin.left, width - margin.right]);
+    const y = d3.scalePoint().domain(rows.map((d) => d.label)).range([margin.top + 34, height - margin.bottom - 34]);
     const layer = d3.select(svg).append("g");
-    [1, 2, 10, 50, maxObs].filter((value, index, values) => value <= maxObs && values.indexOf(value) === index).forEach((value) => {
-      layer.append("line").attr("class", "frequency-guide").attr("x1", x(value)).attr("x2", x(value)).attr("y1", margin.top).attr("y2", height - margin.bottom);
-      layer.append("text").attr("class", "frequency-axis").attr("x", x(value)).attr("y", height - 16).attr("text-anchor", "middle").text(fmt(value));
-    });
-    layer.selectAll("circle")
-      .data(state.data.taxa)
-      .join("circle")
-      .attr("class", "frequency-dot")
-      .attr("cx", (d) => x(Math.max(1, d.observation_count)))
-      .attr("cy", (d, index) => margin.top + 16 + ((index * 31) % Math.max(36, height - margin.top - margin.bottom - 28)))
-      .attr("r", (d) => 1.15 + Math.min(4.8, Math.sqrt(d.observation_count) * 0.39))
-      .attr("fill", (d) => state.data.summary.colors[d.group] || colors.Unclassified)
-      .attr("opacity", 0.8)
-      .on("pointerenter", (event, d) => {
-        const readout = q("#frequency-readout");
-        if (readout) readout.textContent = `${d.scientific}, ${fmt(d.observation_count)} sighting${d.observation_count === 1 ? "" : "s"}`;
-      });
-    const singleton = state.data.distribution[0]?.taxa || 0;
-    if (q("#frequency-readout")) q("#frequency-readout").textContent = `${fmt(singleton)} taxa were seen once`;
+    layer.selectAll("text.frequency-label")
+      .data(rows)
+      .join("text")
+      .attr("class", "frequency-label")
+      .attr("x", 0)
+      .attr("y", (d) => y(d.label) + 4)
+      .text((d) => d.label);
+    layer.selectAll("rect.frequency-track")
+      .data(rows)
+      .join("rect")
+      .attr("class", "frequency-track")
+      .attr("x", x(0))
+      .attr("y", (d) => y(d.label) - 7)
+      .attr("width", x(1) - x(0))
+      .attr("height", 14);
+    layer.selectAll("rect.frequency-bar")
+      .data(rows)
+      .join("rect")
+      .attr("class", "frequency-bar")
+      .attr("x", x(0))
+      .attr("y", (d) => y(d.label) - 7)
+      .attr("width", (d) => Math.max(1, x(d.value) - x(0)))
+      .attr("height", 14);
+    layer.selectAll("text.frequency-value")
+      .data(rows)
+      .join("text")
+      .attr("class", "frequency-value")
+      .attr("x", x(1) + 10)
+      .attr("y", (d) => y(d.label) + 5)
+      .text((d) => `${Math.round(d.value * 100)}%`);
+    layer.selectAll("text.frequency-detail")
+      .data(rows)
+      .join("text")
+      .attr("class", "frequency-detail")
+      .attr("x", x(0))
+      .attr("y", (d) => y(d.label) + 27)
+      .text((d) => `${fmt(d.count)} of ${fmt(d.total)}`);
+    if (q("#frequency-readout")) q("#frequency-readout").textContent = `${Math.round(rows[0].value * 100)}% of taxon IDs`;
   }
 
   function renderAttention() {
@@ -724,7 +868,7 @@
       .attr("class", "network-label taxon")
       .attr("x", (d) => d.x + 11).attr("y", (d) => d.y + 3)
       .text((d) => d.label);
-    if (q("#network-readout")) q("#network-readout").textContent = `${observerRows.length} people, ${taxonRows.length} taxa and ${fmt(links.length)} visible connections`;
+    if (q("#network-readout")) q("#network-readout").textContent = `${observerRows.length} people connect with ${taxonRows.length} taxa through ${fmt(links.length)} visible links`;
   }
 
   function renderEnding() {
@@ -736,8 +880,8 @@
     if (text) {
       const latestName = last.scientific === "Amata"
         ? "a handmaiden moth in the genus Amata"
-        : `${safe(last.common, last.scientific)}${last.common ? `, identified as ${last.scientific}` : ""}`;
-      text.textContent = `On ${formatDate(last.date)}, someone shared a sighting of ${latestName}. It became one more sighting in the shared record.`;
+        : `${safe(last.common, last.scientific)}${last.common ? ` (${last.scientific})` : ""}`;
+      text.textContent = `Someone shared a sighting of ${latestName} on ${formatDate(last.date)}. It became one more sighting in the shared record.`;
     }
   }
 
@@ -778,7 +922,7 @@
   function updateEffortCaption(cell, label) {
     const metric = q("[data-effort-metric].is-active")?.dataset.effortMetric || "taxa";
     const caption = q("#effort-caption");
-    if (caption) caption.textContent = `${label}: ${fmt(cell[metric])}, with ${fmt(cell.observations)} sightings in total`;
+    if (caption) caption.textContent = `${label}: ${fmt(cell[metric])}. This cell has ${fmt(cell.observations)} sightings in total.`;
   }
 
   function renderTime() {
@@ -818,7 +962,7 @@
           <p class="moment-role">${escapeHtml(moment.role)}</p>
           <h3>${escapeHtml(moment.scientific)}</h3>
           ${moment.common ? `<p class="moment-common">${escapeHtml(moment.common)}</p>` : ""}
-          <p class="moment-credit">Seen ${escapeHtml(formatDate(moment.observed_on))}, ${escapeHtml(moment.license)}<br>Photo: ${escapeHtml(moment.photographer)}. <a href="${escapeHtml(moment.url)}">View the sighting</a></p>
+          <p class="moment-credit">Seen ${escapeHtml(formatDate(moment.observed_on))}<br>${escapeHtml(moment.license)}<br>Photo: ${escapeHtml(moment.photographer)}. <a href="${escapeHtml(moment.url)}">View the sighting</a></p>
         </div>
       </article>`).join("");
   }
